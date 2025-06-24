@@ -1,64 +1,72 @@
 import SwiftUI
 
+// Update CardData to support both system and custom images
+struct CardData {
+    let icon: String
+    let isSystemImage: Bool // New property to differentiate between system and custom images
+    let title: String
+}
+
 struct OnboardingView: View {
     @State private var currentCardIndex = 0
-    @State private var circle1Offset = CGSize(width: -100, height: -200)
-    @State private var circle2Offset = CGSize(width: 100, height: 200)
-    @State private var circle1Color: Color = .white.opacity(0.3)
-    @State private var circle2Color: Color = .white.opacity(0.3)
+    @State private var topCircleScale: CGFloat = 0.5
+    @State private var bottomCircleScale: CGFloat = 0.3
+    @State private var topCircleOpacity: Double = 0.1
+    @State private var bottomCircleOpacity: Double = 0.2
     @State private var navigateToLogin = false
 
     let cards = [
-        CardData(icon: "carrot.fill", title: "Follow a balanced, nutrient-rich diet"),
-        CardData(icon: "figure.yoga", title: "Perfect your form with focused technique training"),
-        CardData(icon: "dumbbell.fill", title: "Ultimate Expert Workout Library")
+        CardData(icon: "Diet", isSystemImage: false, title: "Follow a balanced, nutrient-rich diet"),
+        CardData(icon: "Posture", isSystemImage: false, title: "Perfect your form with focused technique training"),
+        CardData(icon: "Gym", isSystemImage: false, title: "Ultimate Expert Workout Library")
     ]
 
     var body: some View {
         ZStack {
             // Gradient background
             LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "8A62D7"), .white]),
-                startPoint: .top,
-                endPoint: .bottom
+                gradient: Gradient(colors: [
+                    Color(hex: "6366F1"), // Indigo-500
+                    Color(hex: "#000")
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
 
-            // Animated circles in the background
-            ZStack {
-                Circle()
-                    .frame(width: 150, height: 150)
-                    .foregroundColor(circle1Color)
-                    .offset(circle1Offset)
-                    .onAppear {
-                        withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
-                            circle1Offset = CGSize(width: 100, height: 200)
-                            circle1Color = Color(hex: "B693F9").opacity(0.3)
+            // Animated circles
+            GeometryReader { geometry in
+                ZStack {
+                    Circle()
+                        .frame(width: 80, height: 80)
+                        .foregroundColor(Color(hex: "fff").opacity(topCircleOpacity))
+                        .position(
+                            x: geometry.size.width * 0.22,
+                            y: geometry.size.height * 0.30
+                        )
+                        .scaleEffect(topCircleScale)
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: 2.5)) {
+                                topCircleScale = 1.2
+                                topCircleOpacity = 0.3
+                            }
                         }
-                    }
-                    .onChange(of: circle1Offset) { newOffset in
-                        // Change color based on vertical position for circle1
-                        withAnimation {
-                            circle1Color = newOffset.height > 0 ? Color(hex: "B693F9").opacity(0.3) : Color.white.opacity(0.3)
-                        }
-                    }
 
-                Circle()
-                    .frame(width: 200, height: 200)
-                    .foregroundColor(circle2Color)
-                    .offset(circle2Offset)
-                    .onAppear {
-                        withAnimation(.easeInOut(duration: 6).repeatForever(autoreverses: true)) {
-                            circle2Offset = CGSize(width: -100, height: -200)
-                            circle2Color = Color.white.opacity(0.3)
+                    Circle()
+                        .frame(width: 100, height: 100)
+                        .foregroundColor(Color(hex: "6366f1").opacity(bottomCircleOpacity))
+                        .position(
+                            x: geometry.size.width * 0.78,
+                            y: geometry.size.height * 0.65
+                        )
+                        .scaleEffect(bottomCircleScale)
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: 3).delay(0.8)) {
+                                bottomCircleScale = 1.1
+                                bottomCircleOpacity = 0.4
+                            }
                         }
-                    }
-                    .onChange(of: circle2Offset) { newOffset in
-                        // Change color based on vertical position for circle2
-                        withAnimation {
-                            circle2Color = newOffset.height > 0 ? Color(hex: "B693F9").opacity(0.3) : Color.white.opacity(0.3)
-                        }
-                    }
+                }
             }
 
             // Main content
@@ -69,26 +77,25 @@ struct OnboardingView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 30, height: 30)
-                        .foregroundColor(.black)
+                        .foregroundColor(.white)
                         .rotationEffect(.degrees(90))
 
                     Rectangle()
-                        .frame(width: 1, height: 30)
-                        .foregroundColor(.black)
+                        .frame(width: 2, height: 30)
+                        .foregroundColor(.white)
 
                     Text("ShapeShift")
                         .font(.title)
-                        .fontWeight(.regular)
-                        .foregroundColor(.black)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
                 }
                 .padding(.top, 20)
 
                 Text("TAG LINE")
                     .font(.caption)
-                    .foregroundColor(.black)
+                    .foregroundColor(.white.opacity(0.8))
                     .padding(.bottom, 40)
 
-                // Add space to shift cards down
                 Spacer()
                     .frame(height: 50)
 
@@ -96,10 +103,26 @@ struct OnboardingView: View {
                     ForEach(cards.indices.reversed(), id: \.self) { index in
                         CardView(
                             icon: cards[index].icon,
+                            isSystemImage: cards[index].isSystemImage, // Pass the new property
                             title: cards[index].title,
                             isVisible: currentCardIndex == index,
                             onSwipe: { direction in
-                                // Move to the next card regardless of swipe direction
+                                withAnimation(.easeInOut(duration: 0.8)) {
+                                    topCircleScale = direction == .right ? 1.4 : 1.0
+                                    bottomCircleScale = direction == .left ? 1.3 : 0.9
+                                    topCircleOpacity = direction == .right ? 0.4 : 0.25
+                                    bottomCircleOpacity = direction == .left ? 0.5 : 0.35
+                                }
+                                
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                    withAnimation(.easeInOut(duration: 1.0)) {
+                                        topCircleScale = 1.2
+                                        bottomCircleScale = 1.1
+                                        topCircleOpacity = 0.3
+                                        bottomCircleOpacity = 0.4
+                                    }
+                                }
+                                
                                 currentCardIndex = (currentCardIndex + 1) % cards.count
                             }
                         )
@@ -109,35 +132,38 @@ struct OnboardingView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 50)
 
+                // Page indicators
                 HStack {
                     ForEach(cards.indices, id: \.self) { index in
                         Circle()
                             .frame(width: 8, height: 8)
-                            .foregroundColor(currentCardIndex == index ? Color(hex: "8A62D7") : .white)
+                            .foregroundColor(currentCardIndex == index ? .white : Color.white.opacity(0.4))
                             .overlay(
                                 Circle()
-                                    .stroke(Color.gray, lineWidth: 1)
+                                    .stroke(Color.white.opacity(0.6), lineWidth: 1)
                             )
                     }
                 }
                 .padding(.vertical, 40)
 
-                // Push the button to the bottom
                 Spacer()
 
-                // Next/Continue button (at the bottom)
+                // Next/Continue button
                 if currentCardIndex == cards.count - 1 {
-                    // On the last card, show "Continue" with navigation to LoginPage
                     Button(action: {
                         navigateToLogin = true
                     }) {
                         Text("Continue")
                             .font(.headline)
+                            .fontWeight(.semibold)
                             .foregroundColor(.white)
-                            .padding()
+                            .padding(.vertical, 16)
                             .frame(maxWidth: .infinity)
-                            .background(Color(hex: "8A62D7"))
-                            .cornerRadius(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .foregroundColor(Color(hex: "6366F1"))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            )
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 10)
@@ -151,19 +177,38 @@ struct OnboardingView: View {
                         .hidden()
                     )
                 } else {
-                    // On other cards, show "Next" to cycle through cards
                     Button(action: {
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            topCircleScale = 1.3
+                            bottomCircleScale = 1.2
+                            topCircleOpacity = 0.35
+                            bottomCircleOpacity = 0.45
+                        }
+                        
                         withAnimation {
                             currentCardIndex = (currentCardIndex + 1) % cards.count
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            withAnimation(.easeInOut(duration: 0.8)) {
+                                topCircleScale = 1.2
+                                bottomCircleScale = 1.1
+                                topCircleOpacity = 0.3
+                                bottomCircleOpacity = 0.4
+                            }
                         }
                     }) {
                         Text("Next")
                             .font(.headline)
+                            .fontWeight(.semibold)
                             .foregroundColor(.white)
-                            .padding()
+                            .padding(.vertical, 16)
                             .frame(maxWidth: .infinity)
-                            .background(Color(hex: "8A62D7"))
-                            .cornerRadius(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .foregroundColor(Color(hex: "6366F1"))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            )
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 10)
@@ -175,19 +220,9 @@ struct OnboardingView: View {
     }
 }
 
-struct CardData {
-    let icon: String
-    let title: String
-}
-
-enum SwipeDirection {
-    case left
-    case right
-    case none
-}
-
 struct CardView: View {
     let icon: String
+    let isSystemImage: Bool // New property
     let title: String
     let isVisible: Bool
     let onSwipe: (SwipeDirection) -> Void
@@ -199,53 +234,63 @@ struct CardView: View {
     var body: some View {
         ZStack {
             // Glassmorphic background
-            RoundedRectangle(cornerRadius: 20)
-                .foregroundColor(Color.white.opacity(0.2))
+            RoundedRectangle(cornerRadius: 24)
+                .foregroundColor(Color.white.opacity(0.15))
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .foregroundColor(Color.white.opacity(0.3))
+                    RoundedRectangle(cornerRadius: 24)
+                        .foregroundColor(Color(hex: "6366F1")).opacity(0.5)
                         .blur(radius: 30)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: 24)
                         .stroke(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)]),
+                                gradient: Gradient(colors: [
+                                    Color.white.opacity(0.6),
+                                    Color.white.opacity(0.2)
+                                ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            lineWidth: 1
+                            lineWidth: 1.5
                         )
                 )
-                .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 5)
+                .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
 
-            // Inner highlight for glass sheen
-            RoundedRectangle(cornerRadius: 20)
-                .foregroundColor(Color.white.opacity(0.1))
-                .padding(2)
-                .blur(radius: 5)
+            RoundedRectangle(cornerRadius: 24)
+                .foregroundColor(Color.white.opacity(0.05))
+                .padding(3)
+                .blur(radius: 8)
 
-            VStack {
-                // Icon in a circular background
-                Image(systemName: icon)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 40, height: 40)
-                    .foregroundColor(.black)
-                    .padding(15)
-                    .background(Circle().foregroundColor(Color(hex: "8A62D7").opacity(0.2)))
+            VStack(spacing: 20) {
+                // Conditionally render system image or custom image
+                if isSystemImage {
+                    Image(systemName: icon)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(Color(hex: "6366F1"))
+                        .padding(20)
+                        
+                } else {
+                    Image(icon) // Use custom image from asset catalog
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                        .padding(20)
+                       
+                }
 
-                // Title text
                 Text(title.uppercased())
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.black)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                    .padding(.bottom, 20)
+                    .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
             }
+            .padding(.vertical, 10)
         }
-        .frame(width: 300, height: 250)
+        .frame(width: 300, height: 280)
         .offset(x: offset.width, y: offset.height)
         .rotationEffect(.degrees(rotation))
         .opacity(isVisible && !isSwiping ? 1 : 0)
@@ -272,13 +317,11 @@ struct CardView: View {
                         }
 
                         if direction != .none {
-                            // Animate card off-screen
                             withAnimation(.spring()) {
                                 offset = CGSize(width: direction == .right ? 500 : -500, height: 0)
                                 rotation = direction == .right ? 20 : -20
                                 isSwiping = true
                             }
-                            // Update card index after animation completes
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 onSwipe(direction)
                                 offset = .zero
@@ -286,7 +329,6 @@ struct CardView: View {
                                 isSwiping = false
                             }
                         } else {
-                            // Reset position if swipe threshold not met
                             withAnimation(.spring()) {
                                 offset = .zero
                                 rotation = 0
@@ -298,6 +340,11 @@ struct CardView: View {
     }
 }
 
+enum SwipeDirection {
+    case left
+    case right
+    case none
+}
 
 struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
@@ -306,3 +353,5 @@ struct OnboardingView_Previews: PreviewProvider {
         }
     }
 }
+
+
