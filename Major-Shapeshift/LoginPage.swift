@@ -30,41 +30,7 @@ struct LoginPage: View {
             )
             .ignoresSafeArea()
 
-            // Animated circles
-            GeometryReader { geometry in
-                ZStack {
-                    Circle()
-                        .frame(width: 80, height: 80)
-                        .foregroundColor(Color.white.opacity(topCircleOpacity))
-                        .position(
-                            x: geometry.size.width * 0.22,
-                            y: geometry.size.height * 0.30
-                        )
-                        .scaleEffect(topCircleScale)
-                        .onAppear {
-                            withAnimation(.easeInOut(duration: 2.5)) {
-                                topCircleScale = 1.2
-                                topCircleOpacity = 0.3
-                            }
-                        }
-
-                    Circle()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(Color(hex: "6366F1").opacity(bottomCircleOpacity))
-                        .position(
-                            x: geometry.size.width * 0.78,
-                            y: geometry.size.height * 0.65
-                        )
-                        .scaleEffect(bottomCircleScale)
-                        .onAppear {
-                            withAnimation(.easeInOut(duration: 3).delay(0.8)) {
-                                bottomCircleScale = 1.1
-                                bottomCircleOpacity = 0.4
-                            }
-                        }
-                }
-            }
-
+         
             // Main content
             VStack(spacing: 20) {
                 // Header
